@@ -14,7 +14,7 @@ It's fully written in JavaScript and uses resource metadata for its configuratio
 ## Showcase
 
 Video showing Los Santos Rock Radio replaced by a WebRadio and Non-Stop-Pop FM replaced by a song:
-[![Showcase](https://cf-e2.streamablevideo.com/image/6hrhp.jpg)](https://streamable.com/6hrhp "Showcase")
+[![Showcase](https://cf-e2.streamablevideo.com/image/6hrhp_1.jpg)](https://streamable.com/6hrhp "Showcase")
 
 ## Known bugs and limitations
 
@@ -30,7 +30,7 @@ For each custom radio, add this line in `_resource.lua`:
 supersede_radio "[RADIO_NAME]" { url = "[RADIO URL]", volume = 0.5 }
 ```
 
-You can find the list of radio names in [`data.js`](data.js) and a full example in [`__resource.lua`](__resource.lua).
+You can find the list of radio names in [`data.js`](radio/data.js) and a full example in [`__resource.lua`](radio/__resource.lua).
 
 ## Tips
 
