@@ -1,0 +1,57 @@
+<html>
+<head>
+    <script>
+        let customRadios = [];
+
+        const stopRadio = (radio) => {
+            radio.audio.muted = true;
+            if (radio.playPromise !== undefined) {
+                radio.playPromise.then(() => {
+                    radio.audio.pause();
+                });
+            }
+        };
+
+        document.addEventListener("DOMContentLoaded", () => {
+            fetch("http://radio/ready", { "method": "POST", "body": "{}" });
+
+            window.addEventListener("message", (event) => {
+                let item = event.data;
+
+                switch (item.type) {
+                    case "create":
+                        customRadios = item.radios.map((radio) => {
+                            radio.audio = new Audio(radio.data.url);
+                            radio.audio.volume = radio.data.volume || 0.1;
+                            radio.audio.muted = true;
+                            return radio;
+                        });
+
+                        break;
+                    case "play":
+                        let radio = customRadios.find((radio) => {
+                            return radio.name === item.radio;
+                        });
+
+                        if (radio) {
+                            if (item.play) {
+                                radio.audio.muted = false;
+                                radio.playPromise = radio.audio.play();
+                            } else {
+                                stopRadio(radio);
+                            }
+                        } else {
+                            customRadios.forEach((radio) => {
+                                stopRadio(radio);
+                            });
+                        }
+
+                        break;
+                }
+            });
+        });
+    </script>
+</head>
+<body>
+</body>
+</html>
