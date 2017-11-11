@@ -24,6 +24,22 @@
                             radio.audio = new Audio(radio.data.url);
                             radio.audio.volume = radio.data.volume || 0.1;
                             radio.audio.muted = true;
+                            radio.audio.addEventListener('error', function failed(e) {
+                                radio.audio.src = radio.audio.src;
+                                radio.playPromise = radio.audio.play();
+                            }, true);
+                            radio.timeInterval = setInterval(function() {
+                                if (radio.audio.paused) {
+                                } else if (typeof radio.lastTime === 'undefined') {
+                                    radio.lastTime = 0;
+                                } else if (radio.audio.currentTime > radio.lastTime) {
+                                    radio.lastTime = radio.audio.currentTime;
+                                } else {
+                                    delete radio.lastTime;
+                                    radio.audio.src = radio.audio.src;
+                                    radio.playPromise = radio.audio.play();
+                                }
+                            }, 3000);
                             return radio;
                         });
 
