@@ -18,6 +18,9 @@ for (let i = 0, length = GetNumResourceMetadata("radio", "supersede_radio"); i <
                 "name": radio,
                 "data": data
             });
+            if (data.name) {
+                AddTextEntry(radio, data.name);
+            }
         } else {
             console.error(`radio: Missing data for ${radio}.`);
         }
