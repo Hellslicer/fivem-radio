@@ -49,6 +49,12 @@ const StopCustomRadios = () => {
 
 const ToggleCustomRadioBehavior = () => {
     SetFrontendRadioActive(!isPlaying);
+
+    if (isPlaying) {
+        StartAudioScene("DLC_MPHEIST_TRANSITION_TO_APT_FADE_IN_RADIO_SCENE");
+    } else {
+        StopAudioScene("DLC_MPHEIST_TRANSITION_TO_APT_FADE_IN_RADIO_SCENE");
+    }
 };
 
 setTick(() => {

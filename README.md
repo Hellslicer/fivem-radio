@@ -18,7 +18,6 @@ Video showing Los Santos Rock Radio replaced by a WebRadio and Non-Stop-Pop FM r
 
 ## Known bugs and limitations
 
-* Vehicles still emits low sound of the original radio
 * No MPEG, MP3 or AAC support as CEF only supports open formats
 
 ## Configuration
