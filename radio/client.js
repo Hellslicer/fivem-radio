@@ -1,4 +1,6 @@
 const customRadios = [];
+let isPlaying = false;
+let index = -1;
 
 for (let i = 0, length = GetNumResourceMetadata("radio", "supersede_radio"); i < length; i++) {
     const radio = GetResourceMetadata("radio", "supersede_radio", i);
@@ -29,38 +31,40 @@ on("__cfx_nui:ready", (data, cb) => {
     SendNuiMessage(JSON.stringify({ "type": "create", "radios": customRadios }));
 });
 
-const PlayCustomRadio = (state, radio) => {
-    radio = radio || {};
-    radio.isPlaying = state;
-    SetFrontendRadioActive(!customRadios.reduce((isPlaying, radio) => {
-        return radio.isPlaying || isPlaying;
-    }, false));
-    SendNuiMessage(JSON.stringify({ "type": "play", "radio": radio.name, "play": radio.isPlaying }));
+const PlayCustomRadio = (radio) => {
+    isPlaying = true;
+    index = customRadios.indexOf(radio);
+    ToggleCustomRadioBehavior();
+    SendNuiMessage(JSON.stringify({ "type": "play", "radio": radio.name }));
+};
+
+const StopCustomRadios = () => {
+    isPlaying = false;
+    ToggleCustomRadioBehavior();
+    SendNuiMessage(JSON.stringify({ "type": "stop" }));
+};
+
+const ToggleCustomRadioBehavior = () => {
+    SetFrontendRadioActive(!isPlaying);
 };
 
 setTick(() => {
     if (IsPlayerVehicleRadioEnabled()) {
         let playerRadioStationName = GetPlayerRadioStationName();
 
-        for (let radio of customRadios) {
-            let customRadio = playerRadioStationName === radio.name;
+        let customRadio = customRadios.find((radio) => {
+            return radio.name === playerRadioStationName;
+        });
 
-            if (!radio.isPlaying && customRadio) {
-                PlayCustomRadio(true, radio);
-            } else if (radio.isPlaying && !customRadio) {
-                PlayCustomRadio(false, radio);
-            }
+        if (!isPlaying && customRadio) {
+            PlayCustomRadio(customRadio);
+        } else if (isPlaying && customRadio && customRadios.indexOf(customRadio) !== index) {
+            StopCustomRadios();
+            PlayCustomRadio(customRadio);
+        } else if (isPlaying && !customRadio) {
+            StopCustomRadios();
         }
-    } else {
-        let isPlaying = customRadios.reduce((isPlaying, radio) => {
-            return radio.isPlaying || isPlaying;
-        }, false);
-
-        if (isPlaying) {
-            for (let i = 0, length = customRadios.length; i < length; i++) {
-                customRadios[i].isPlaying = false;
-            }
-            PlayCustomRadio(false);
-        }
+    } else if (isPlaying) {
+        StopCustomRadios();
     }
 });

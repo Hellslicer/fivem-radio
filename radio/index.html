@@ -1,14 +1,67 @@
 <html>
 <head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.0.5/howler.core.min.js"></script>
     <script>
-        let customRadios = [];
+        let customRadios;
 
-        const stopRadio = (radio) => {
-            radio.audio.muted = true;
-            if (radio.playPromise !== undefined) {
-                radio.playPromise.then(() => {
-                    radio.audio.pause();
-                });
+        /**
+         * Radio class containing the state of our stations.
+         * Includes all methods for playing, stopping, etc.
+         * @param {Array} stations Array of objects with station details.
+         */
+        const Radio = function (stations) {
+            let self = this;
+
+            self.stations = stations;
+            self.index = 0;
+        };
+        Radio.prototype = {
+            /**
+             * Play a station with a specific index.
+             * @param  {Number} index Index in the array of stations.
+             */
+            play: function (index) {
+                let self = this;
+                let sound;
+
+                index = index !== -1 ? index : self.index;
+                let station = self.stations[index];
+
+                // If we already loaded this track, use the current one.
+                // Otherwise, setup and load a new Howl.
+                if (station.howl) {
+                    sound = station.howl;
+                } else {
+                    sound = station.howl = new Howl({
+                        src: station.data.url,
+                        html5: true, // A live stream can only be played through HTML5 Audio.
+                        format: ['opus', 'ogg'],
+                        volume: station.data.volume || 0.1
+                    });
+                }
+
+                // Begin playing the sound.
+                sound.play();
+
+                // Keep track of the index we are currently playing.
+                self.index = index;
+            },
+
+            /**
+             * Stop a station's live stream.
+             */
+            stop: function () {
+                let self = this;
+
+                // Get the Howl we want to manipulate.
+                let sound = self.stations[self.index].howl;
+
+                // Stop and unload the sound.
+                if (sound && sound.state() !== "unloaded") {
+                    sound.unload();
+                } else if (sound) {
+                    sound.stop();
+                }
             }
         };
 
@@ -20,48 +73,21 @@
 
                 switch (item.type) {
                     case "create":
-                        customRadios = item.radios.map((radio) => {
-                            radio.audio = new Audio(radio.data.url);
-                            radio.audio.volume = radio.data.volume || 0.1;
-                            radio.audio.muted = true;
-                            radio.audio.addEventListener('error', function failed(e) {
-                                radio.audio.src = radio.audio.src;
-                                radio.playPromise = radio.audio.play();
-                            }, true);
-                            radio.timeInterval = setInterval(function() {
-                                if (radio.audio.paused) {
-                                } else if (typeof radio.lastTime === 'undefined') {
-                                    radio.lastTime = 0;
-                                } else if (radio.audio.currentTime > radio.lastTime) {
-                                    radio.lastTime = radio.audio.currentTime;
-                                } else {
-                                    delete radio.lastTime;
-                                    radio.audio.src = radio.audio.src;
-                                    radio.playPromise = radio.audio.play();
-                                }
-                            }, 3000);
-                            return radio;
-                        });
-
+                        customRadios = new Radio(item.radios);
                         break;
                     case "play":
-                        let radio = customRadios.find((radio) => {
+                        let index = customRadios.stations.findIndex((radio) => {
                             return radio.name === item.radio;
                         });
+                        let isNotPlaying = (customRadios.stations[index].howl && !customRadios.stations[index].howl.playing());
 
-                        if (radio) {
-                            if (item.play) {
-                                radio.audio.muted = false;
-                                radio.playPromise = radio.audio.play();
-                            } else {
-                                stopRadio(radio);
-                            }
-                        } else {
-                            customRadios.forEach((radio) => {
-                                stopRadio(radio);
-                            });
+                        // If the station isn't already playing or it doesn't exist, play it.
+                        if (isNotPlaying || !customRadios.stations[index].howl) {
+                            customRadios.play(index);
                         }
-
+                        break;
+                    case "stop":
+                        customRadios.stop();
                         break;
                 }
             });
