@@ -8,11 +8,13 @@
          * Radio class containing the state of our stations.
          * Includes all methods for playing, stopping, etc.
          * @param {Array} stations Array of objects with station details.
+         * @param {number} volume Number from 0.0 to 1.0
          */
-        const Radio = function (stations) {
+        const Radio = function (stations, volume) {
             let self = this;
 
             self.stations = stations;
+            self.volume = volume;
             self.index = 0;
         };
         Radio.prototype = {
@@ -36,7 +38,7 @@
                         src: station.data.url,
                         html5: true, // A live stream can only be played through HTML5 Audio.
                         format: ['opus', 'ogg'],
-                        volume: station.data.volume || 0.1
+                        volume: self.volume || 0.1
                     });
                 }
 
@@ -62,28 +64,53 @@
                 } else if (sound) {
                     sound.stop();
                 }
+            },
+
+            /**
+             * Change stations volume.
+             * @param {number} volume Number from 0.0 to 1.0
+             */
+            setVolume: function(volume) {
+                let self = this;
+
+                self.volume = volume;
+
+                for (let i = 0, length = self.stations.length; i < length; i++) {
+                    if (self.stations[i].howl) {
+                        self.stations[i].howl.volume(volume);
+                    }
+                }
             }
         };
 
         document.addEventListener("DOMContentLoaded", () => {
-            fetch("http://radio/ready", { "method": "POST", "body": "{}" });
+            fetch("http://radio/radio:ready", { "method": "POST", "body": "{}" });
 
             window.addEventListener("message", (event) => {
                 let item = event.data;
 
                 switch (item.type) {
                     case "create":
-                        customRadios = new Radio(item.radios);
+                        customRadios = new Radio(item.radios, item.volume);
+                        break;
+                    case "volume":
+                        if (customRadios) {
+                            customRadios.setVolume(item.volume);
+                        }
                         break;
                     case "play":
-                        let index = customRadios.stations.findIndex((radio) => {
-                            return radio.name === item.radio;
-                        });
-                        let isNotPlaying = (customRadios.stations[index].howl && !customRadios.stations[index].howl.playing());
+                        if (typeof customRadios !== "undefined") {
+                            let index = customRadios.stations.findIndex((radio) => {
+                                return radio.name === item.radio;
+                            });
+                            let isNotPlaying = (customRadios.stations[index].howl && !customRadios.stations[index].howl.playing());
 
-                        // If the station isn't already playing or it doesn't exist, play it.
-                        if (isNotPlaying || !customRadios.stations[index].howl) {
-                            customRadios.play(index);
+                            // If the station isn't already playing or it doesn't exist, play it.
+                            if (isNotPlaying || !customRadios.stations[index].howl) {
+                                customRadios.play(index);
+                            }
+                        } else {
+                            fetch("http://radio/radio:ready", { "method": "POST", "body": "{}" });
                         }
                         break;
                     case "stop":

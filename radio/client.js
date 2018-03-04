@@ -1,6 +1,8 @@
 const customRadios = [];
 let isPlaying = false;
 let index = -1;
+let volume = GetProfileSetting(306) / 10;
+let previousVolume = volume;
 
 for (let i = 0, length = GetNumResourceMetadata("radio", "supersede_radio"); i < length; i++) {
     const radio = GetResourceMetadata("radio", "supersede_radio", i);
@@ -29,10 +31,11 @@ for (let i = 0, length = GetNumResourceMetadata("radio", "supersede_radio"); i <
     }
 }
 
-RegisterNuiCallbackType("ready");
-on("__cfx_nui:ready", (data, cb) => {
-    SendNuiMessage(JSON.stringify({ "type": "create", "radios": customRadios }));
+RegisterNuiCallbackType("radio:ready");
+on("__cfx_nui:radio:ready", (data, cb) => {
+    SendNuiMessage(JSON.stringify({ "type": "create", "radios": customRadios, "volume": volume }));
 });
+SendNuiMessage(JSON.stringify({ "type": "create", "radios": customRadios, "volume": volume }));
 
 const PlayCustomRadio = (radio) => {
     isPlaying = true;
@@ -75,5 +78,11 @@ setTick(() => {
         }
     } else if (isPlaying) {
         StopCustomRadios();
+    }
+
+    volume = GetProfileSetting(306) / 10;
+    if (previousVolume !== volume) {
+        SendNuiMessage(JSON.stringify({ "type": "volume", "volume": volume }));
+        previousVolume = volume;
     }
 });

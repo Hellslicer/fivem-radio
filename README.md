@@ -10,6 +10,7 @@ It's fully written in JavaScript and uses resource metadata for its configuratio
 * Audio stream
 * No dependency
 * Easy configuration
+* Player-configurable volume
 
 ## Showcase
 
