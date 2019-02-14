@@ -34,6 +34,7 @@ for (let i = 0, length = GetNumResourceMetadata("radio", "supersede_radio"); i <
 RegisterNuiCallbackType("radio:ready");
 on("__cfx_nui:radio:ready", (data, cb) => {
     SendNuiMessage(JSON.stringify({ "type": "create", "radios": customRadios, "volume": volume }));
+    previousVolume = -1;
 });
 SendNuiMessage(JSON.stringify({ "type": "create", "radios": customRadios, "volume": volume }));
 
