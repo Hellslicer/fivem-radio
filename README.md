@@ -1,5 +1,3 @@
-# ORIGINALLY CREATED BY HELLSLICER
-
 # FiveM Radio
 
 This resource allows you to integrate your own radios in place of the original radios.
