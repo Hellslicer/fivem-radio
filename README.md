@@ -19,7 +19,7 @@ Video showing Los Santos Rock Radio replaced by a WebRadio and Non-Stop-Pop FM r
 
 ## Known bugs and limitations
 
-* No MPEG, MP3 or AAC support as CEF only supports open formats
+* No MPEG or AAC support as CEF only supports open formats
 
 ## Configuration
 
