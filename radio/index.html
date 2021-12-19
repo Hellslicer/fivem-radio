@@ -1,6 +1,6 @@
 <html>
 <head>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.1.2/howler.core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.core.min.js"></script>
     <script>
         let customRadios;
 
@@ -84,7 +84,7 @@
         };
 
         document.addEventListener("DOMContentLoaded", () => {
-            fetch("http://radio/radio:ready", { "method": "POST", "body": "{}" });
+            fetch("https://radio/radio:ready", { "method": "POST", "body": "{}" });
 
             window.addEventListener("message", (event) => {
                 let item = event.data;
@@ -110,7 +110,7 @@
                                 customRadios.play(index);
                             }
                         } else {
-                            fetch("http://radio/radio:ready", { "method": "POST", "body": "{}" });
+                            fetch("https://radio/radio:ready", { "method": "POST", "body": "{}" });
                         }
                         break;
                     case "stop":
