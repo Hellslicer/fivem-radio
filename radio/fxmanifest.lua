@@ -1,4 +1,4 @@
-fx_version 'cerulean'
+fx_version 'bodacious'
 game 'gta5'
 
 author 'Hellslicer'
