@@ -21,7 +21,7 @@ const availableRadios = [
     "RADIO_21_DLC_XM17",                // Blonded Los Santos 97.8 FM
     "RADIO_22_DLC_BATTLE_MIX1_RADIO",   // Los Santos Underground Radio
     "RADIO_23_DLC_XM19_RADIO",          // iFruit Radio
-    "RADIO_27_DLC_PRHEI4",              // Still Slipping Los Santo
+    "RADIO_27_DLC_PRHEI4",              // Still Slipping Los Santos
     "RADIO_34_DLC_HEI4_KULT",           // Kult FM
     "RADIO_35_DLC_HEI4_MLR",            // The Music Locker
     "RADIO_36_AUDIOPLAYER",             // Media Player
