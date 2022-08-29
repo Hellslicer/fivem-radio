@@ -4,7 +4,10 @@ game 'gta5'
 author 'Hellslicer'
 description 'This resource allows you to integrate your own radios in place of the original radios'
 
+--
 -- Config
+--
+
 supersede_radio "RADIO_02_POP" { url = "", volume = 0.2, name = "" }
 supersede_radio "RADIO_03_HIPHOP_NEW" { url = "", volume = 0.2, name = "" }
 --supersede_radio "RADIO_04_PUNK" { url = "", volume = 0.2, name = "" }

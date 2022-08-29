@@ -12,22 +12,17 @@ It's fully written in JavaScript and uses resource metadata for its configuratio
 - No dependency
 - Easy configuration
 - Player-configurable volume
+- A modified `hud.ytd` (`gtav_radio_stations_texture_512`)
 
 ## 📺Showcase
-
-Video showing Los Santos Rock Radio replaced by a WebRadio and Non-Stop-Pop FM replaced by a song:
-
+### [🎞️Showcase](https://streamable.com/6hrhp)
+### [🎞️Tutorial](https://youtu.be/2tuJZB_7WPM)
+#### 🖥️Hud:
 <img src="https://cdn.discordapp.com/attachments/517028743357792258/908833431675342849/2021-11-12.png" width="600" height="600">
-
-### [🎞️Video](https://streamable.com/6hrhp)
-
-## 🐛Known bugs and limitations
-
-- Sometimes the radio stream doesn't work
 
 ## 📎Configuration
 
-For each custom radio, add this line in `_resource.lua`:
+For each custom radio, add this line in `fxmanifest.lua:
 ```
 supersede_radio "[ORIGINAL_RADIO_NAME]" { url = "[RADIO URL]", volume = 0.5, name = "[NEW RADIO NAME]" }
 ```
@@ -36,11 +31,12 @@ supersede_radio "[ORIGINAL_RADIO_NAME]" { url = "[RADIO URL]", volume = 0.5, nam
 supersede_radio "RADIO_02_POP" { url = "https://revolutionradio.ru:8443/live.ogg", volume = 0.2 }
 ```
 
-❗ You can find the list of radio names in [`data.js`](radio/data.js) and a full example in [`__resource.lua`](radio/__resource.lua).
+❗ You can find the list of radio names in [`data.js`](radio/data.js) and a full example in [`fxmanifest.lua`](radio/fxmanifest.lua).
 
-## 💡Tips
+## 🐛Known bugs and limitations
 
-Stream a modified `hud.ytd` (`gtav_radio_stations_texture_512`) file to replace radio logos.
+- Sometimes the radio stream doesn't work and the stream doesn't play
+- The text content may disappear more often
 
 ## 🧑‍⚖️License
 
