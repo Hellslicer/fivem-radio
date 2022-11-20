@@ -3,7 +3,7 @@
 This resource allows you to integrate your own radios in place of the original radios.
 It's fully written in JavaScript and uses resource metadata for its configuration.
 
-**WARNING:** With the new TOS from Rockstar Game's, this mod may possibly be against TOS, and may cause legal trouble from Take-Two Interactive if uploaded to your server using non-copyrighted music, or real-world radio stations!
+__**WARNING:**__**With the new TOS from Rockstar Game's, this mod may possibly be against TOS, and may cause legal trouble from Take-Two Interactive if uploaded to your server using non-copyrighted music, or real-world radio stations!**
 
 ## Features
 
