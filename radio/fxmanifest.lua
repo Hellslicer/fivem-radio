@@ -1,8 +1,9 @@
 fx_version 'cerulean'
 game 'gta5'
 
-author 'Hellslicer'
+author 'Ben // Zerofour04 | Hellslicer'
 description 'This resource allows you to integrate your own radios in place of the original radios'
+version '2.0'
 
 --
 -- Config
