@@ -1,3 +1,4 @@
+const resourceName = GetCurrentResourceName();
 const customRadios = [];
 let isPlaying = false;
 let index = -1;
@@ -8,7 +9,7 @@ for (let i = 0, length = GetNumResourceMetadata("radio", "supersede_radio"); i <
     const radio = GetResourceMetadata("radio", "supersede_radio", i);
 
     if (!availableRadios.includes(radio)) {
-        console.error(`radio: ${radio} is an invalid radio.`);
+        console.error(`${resourceName}: ${radio} is an invalid radio.`);
         continue;
     }
 
@@ -24,15 +25,15 @@ for (let i = 0, length = GetNumResourceMetadata("radio", "supersede_radio"); i <
                 AddTextEntry(radio, data.name);
             }
         } else {
-            console.error(`radio: Missing data for ${radio}.`);
+            console.error(`${resourceName}: Missing data for ${radio}.`);
         }
     } catch (e) {
         console.error(e);
     }
 }
 
-RegisterNuiCallbackType("radio:ready");
-on("__cfx_nui:radio:ready", (data, cb) => {
+RegisterNuiCallbackType(`${resourceName}:ready`);
+on(`__cfx_nui:${resourceName}:ready`, (data, cb) => {
     SendNuiMessage(JSON.stringify({ "type": "create", "radios": customRadios, "volume": volume }));
     previousVolume = -1;
 });

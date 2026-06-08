@@ -84,7 +84,7 @@
         };
 
         document.addEventListener("DOMContentLoaded", () => {
-            fetch("http://radio/radio:ready", { "method": "POST", "body": "{}" });
+            fetch(`https://${GetParentResourceName()}/radio:ready`, { "method": "POST", "body": "{}" });
 
             window.addEventListener("message", (event) => {
                 let item = event.data;
@@ -110,7 +110,7 @@
                                 customRadios.play(index);
                             }
                         } else {
-                            fetch("http://radio/radio:ready", { "method": "POST", "body": "{}" });
+                            fetch(`https://${GetParentResourceName()}/radio:ready`, { "method": "POST", "body": "{}" });
                         }
                         break;
                     case "stop":
