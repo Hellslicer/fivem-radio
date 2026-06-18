@@ -1,5 +1,6 @@
 const resourceName = GetCurrentResourceName();
 const decoratorName = "Player_Vehicle_Radio";
+const trackTextCache = new Set();
 const customRadios = [];
 const radios = {};
 let isPlaying = false;
@@ -132,7 +133,6 @@ function GetDistanceBetweenPositions(x1, y1, z1, x2, y2, z2) {
     return Math.sqrt(dx * dx + dy * dy + dz * dz);
 }
 
-
 setInterval(() => {
     const playerPed = PlayerPedId();
 
@@ -144,8 +144,19 @@ setInterval(() => {
             return radio.name === stationName;
         });
 
-        if (radioIndex !== -1 && (!DecorExistOn(vehicle, decoratorName) || radioIndex !== DecorGetInt(vehicle, decoratorName))) {
-            DecorSetInt(vehicle, decoratorName, radioIndex);
+        if (radioIndex !== -1) {
+            const trackTextId = GetAudibleMusicTrackTextId();
+
+            if (!trackTextCache.has(trackTextId)) {
+                AddTextEntry(`${trackTextId}S`, ""); // (S)ong title
+                AddTextEntry(`${trackTextId}A`, ""); // (A)rtist
+
+                trackTextCache.add(trackTextId);
+            }
+
+            if (!DecorExistOn(vehicle, decoratorName) || radioIndex !== DecorGetInt(vehicle, decoratorName)) {
+                DecorSetInt(vehicle, decoratorName, radioIndex);
+            }
         }
 
         if (!isPlaying && radioIndex !== -1) {
