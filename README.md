@@ -8,6 +8,7 @@ It's fully written in JavaScript and uses resource metadata for its configuratio
 * Radio wheel
 * Audio file
 * Audio stream
+* Spatial audio
 * No dependency
 * Easy configuration
 * Player-configurable volume
@@ -15,7 +16,7 @@ It's fully written in JavaScript and uses resource metadata for its configuratio
 ## Showcase
 
 Video showing Los Santos Rock Radio replaced by a WebRadio and Non-Stop-Pop FM replaced by a song:
-[![Showcase](https://forum.cfx.re/uploads/default/original/3X/7/b/7b6b5ce1ae1270f4885aba714ea65c1235397b12.jpg)](https://streamable.com/6hrhp "Showcase")
+[![Showcase](https://forum-cfx-re.akamaized.net/original/3X/7/b/7b6b5ce1ae1270f4885aba714ea65c1235397b12.jpg)](https://streamable.com/6hrhp "Showcase")
 
 ## Known bugs and limitations
 

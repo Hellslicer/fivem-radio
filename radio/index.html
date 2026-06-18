@@ -1,120 +1,158 @@
 <html>
 <head>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.core.min.js"></script>
     <script>
+        const audioContext = new AudioContext({
+            latencyHint: 'playback'
+        });
+        const vehiclesRadio = {};
+        let stations = [];
+        let volume = 1;
         let customRadios;
 
         /**
          * Radio class containing the state of our stations.
          * Includes all methods for playing, stopping, etc.
-         * @param {Array} stations Array of objects with station details.
-         * @param {number} volume Number from 0.0 to 1.0
+         * @param {number} index - Current station index.
+         * @param {boolean} isInside - If the player is inside.
+         * @param {Array} position - Array of position [x, y z].
          */
-        const Radio = function (stations, volume) {
-            let self = this;
+        const Radio = function (index = 0, isInside = true, position = [0, 0, 0]) {
+            this.index = index;
+            this.isInside = isInside;
+            this.position = position;
 
-            self.stations = stations;
-            self.volume = volume;
-            self.index = 0;
+            this.panner = audioContext.createPanner();
+            this.panner.panningModel = 'HRTF';
+            this.panner.refDistance = 1.2;
+            this.panner.rolloffFactor = 1.0;
+            this.panner.distanceModel = 'exponential';
+            this.panner.setPosition(...position);
         };
         Radio.prototype = {
             /**
-             * Play a station with a specific index.
-             * @param  {Number} index Index in the array of stations.
+             * Start a station's live stream.
              */
-            play: function (index) {
-                let self = this;
-                let sound;
+            play: function () {
+                const self = this;
+                const station = stations[this.index];
 
-                index = index !== -1 ? index : self.index;
-                let station = self.stations[index];
+                // Setup a new audio element if needed.
+                if (!self.sound) {
+                    self.sound = new Audio();
 
-                // If we already loaded this track, use the current one.
-                // Otherwise, setup and load a new Howl.
-                if (station.howl) {
-                    sound = station.howl;
-                } else {
-                    sound = station.howl = new Howl({
-                        src: station.data.url,
-                        html5: true, // A live stream can only be played through HTML5 Audio.
-                        format: ['opus', 'ogg', 'mp3'],
-                        volume: (station.data.volume || 1.0) * self.volume || 0.1
-                    });
+                    const mediaElementSource = audioContext.createMediaElementSource(self.sound);
+                    mediaElementSource.connect(self.panner);
+                    self.panner.connect(audioContext.destination);
                 }
 
-                // Begin playing the sound.
-                sound.play();
+                // Set media source.
+                self.sound.src = station.data.url;
 
-                // Keep track of the index we are currently playing.
-                self.index = index;
+                // Set volume.
+                self.setVolume();
+
+                // Set inital position.
+                self.setPosition(self.isInside, self.position);
+
+                // Begin playing the sound.
+                try {
+                    self.sound.play().catch(() => {});
+                } catch (err) {
+                    console.error(err);
+                }
             },
 
             /**
              * Stop a station's live stream.
              */
             stop: function () {
-                let self = this;
-
-                // Get the Howl we want to manipulate.
-                let sound = self.stations[self.index].howl;
-
-                // Stop and unload the sound.
-                if (sound && sound.state() !== "unloaded") {
-                    sound.unload();
-                } else if (sound) {
-                    sound.stop();
+                if (this.sound) {
+                    this.sound.src = '';
                 }
             },
 
             /**
              * Change stations volume.
-             * @param {number} volume Number from 0.0 to 1.0
              */
-            setVolume: function(volume) {
-                let self = this;
-
-                self.volume = volume;
-
-                for (let i = 0, length = self.stations.length; i < length; i++) {
-                    if (self.stations[i].howl) {
-                        self.stations[i].howl.volume((self.stations[i].data.volume || 1.0) * volume);
-                    }
+            setVolume: function() {
+                if (this.sound) {
+                    this.sound.volume  = ((stations[this.index].data.volume || 1.0) * volume) / (this.isInside ? 1 : 2);
                 }
-            }
+            },
+
+            /**
+             * Play a station with a specific index.
+             * @param  {Number} index - Current station index.
+             */
+            setIndex: function(index) {
+                this.stop();
+                this.index = index;
+                this.play();
+            },
+
+            /**
+             * Change stations position.
+             * @param {boolean} isInside - If the player is inside.
+             * @param {Array} position - Array of position [x, y z].
+             */
+            setPosition: function(isInside, position) {
+                this.isInside = isInside;
+                this.position = position;
+
+                if (this.sound) {
+                    if (isInside) {
+                        this.panner.setPosition(0, 0, 0);
+                    } else {
+                        this.panner.setPosition(...position);
+                    }
+                    this.setVolume();
+                }
+            },
         };
 
-        document.addEventListener("DOMContentLoaded", () => {
-            fetch(`https://${GetParentResourceName()}/radio:ready`, { "method": "POST", "body": "{}" });
+        fetch(`https://${GetParentResourceName()}/ready`, { "method": "POST", "body": "{}" }).then(res => res.json()).then((data) => {
+            stations = data.radios;
+            volume = data.volume;
 
-            window.addEventListener("message", (event) => {
+            window.addEventListener('message', (event) => {
                 let item = event.data;
 
                 switch (item.type) {
-                    case "create":
-                        customRadios = new Radio(item.radios, item.volume);
-                        break;
-                    case "volume":
-                        if (customRadios) {
-                            customRadios.setVolume(item.volume);
-                        }
-                        break;
-                    case "play":
-                        if (typeof customRadios !== "undefined") {
-                            let index = customRadios.stations.findIndex((radio) => {
-                                return radio.name === item.radio;
-                            });
-                            let isNotPlaying = (customRadios.stations[index].howl && !customRadios.stations[index].howl.playing());
+                    case 'vehicles':
+                        const radios = item.data;
 
-                            // If the station isn't already playing or it doesn't exist, play it.
-                            if (isNotPlaying || !customRadios.stations[index].howl) {
-                                customRadios.play(index);
+                        for (const vehicle in radios) {
+                            const radio = radios[vehicle];
+
+                            if (!vehiclesRadio[vehicle]) {
+                                vehiclesRadio[vehicle] = new Radio(radio.radioIndex, radio.isInside, radio.position);
+                                vehiclesRadio[vehicle].play();
+                            } else {
+                                vehiclesRadio[vehicle].setPosition(radio.isInside, radio.position);
+
+                                if (vehiclesRadio[vehicle].index !== radio.radioIndex) {
+                                    vehiclesRadio[vehicle].setIndex(radio.radioIndex);
+                                }
                             }
-                        } else {
-                            fetch(`https://${GetParentResourceName()}/radio:ready`, { "method": "POST", "body": "{}" });
                         }
+
                         break;
-                    case "stop":
-                        customRadios.stop();
+                    case 'volume':
+                        volume = item.volume;
+
+                        for (const vehicle in vehiclesRadio) {
+                            vehiclesRadio[vehicle].setVolume();
+                        }
+
+                        break;
+                    case 'stop':
+                        const vehicle = item.vehicle;
+
+                        if (vehiclesRadio[vehicle]) {
+                            vehiclesRadio[vehicle].stop();
+                            delete vehiclesRadio[vehicle];
+                        }
+
                         break;
                 }
             });

@@ -1,7 +1,8 @@
 const resourceName = GetCurrentResourceName();
+const decoratorName = "Player_Vehicle_Radio";
 const customRadios = [];
+const radios = {};
 let isPlaying = false;
-let index = -1;
 let volume = GetProfileSetting(306) / 10;
 let previousVolume = volume;
 
@@ -17,7 +18,6 @@ for (let i = 0, length = GetNumResourceMetadata("radio", "supersede_radio"); i <
         const data = JSON.parse(GetResourceMetadata("radio", "supersede_radio_extra", i));
         if (data !== null) {
             customRadios.push({
-                "isPlaying": false,
                 "name": radio,
                 "data": data
             });
@@ -32,24 +32,18 @@ for (let i = 0, length = GetNumResourceMetadata("radio", "supersede_radio"); i <
     }
 }
 
-RegisterNuiCallbackType(`${resourceName}:ready`);
-on(`__cfx_nui:${resourceName}:ready`, (data, cb) => {
-    SendNuiMessage(JSON.stringify({ "type": "create", "radios": customRadios, "volume": volume }));
-    previousVolume = -1;
+RegisterNuiCallback("ready", (data, cb) => {
+    cb({ "radios": customRadios, "volume": volume });
 });
-SendNuiMessage(JSON.stringify({ "type": "create", "radios": customRadios, "volume": volume }));
 
-const PlayCustomRadio = (radio) => {
+const PlayCustomRadio = () => {
     isPlaying = true;
-    index = customRadios.indexOf(radio);
     ToggleCustomRadioBehavior();
-    SendNuiMessage(JSON.stringify({ "type": "play", "radio": radio.name }));
 };
 
 const StopCustomRadios = () => {
     isPlaying = false;
     ToggleCustomRadioBehavior();
-    SendNuiMessage(JSON.stringify({ "type": "stop" }));
 };
 
 const ToggleCustomRadioBehavior = () => {
@@ -57,29 +51,119 @@ const ToggleCustomRadioBehavior = () => {
 
     if (isPlaying) {
         StartAudioScene("DLC_MPHEIST_TRANSITION_TO_APT_FADE_IN_RADIO_SCENE");
+        SetPositionedPlayerVehicleRadioEmitterEnabled(false);
     } else {
         StopAudioScene("DLC_MPHEIST_TRANSITION_TO_APT_FADE_IN_RADIO_SCENE");
+        SetPositionedPlayerVehicleRadioEmitterEnabled(true);
     }
 };
 
-setTick(() => {
-    if (IsPlayerVehicleRadioEnabled()) {
-        let playerRadioStationName = GetPlayerRadioStationName();
+const StopVehicleRadio = (vehicle, removeDecorator = true) => {
+    if (removeDecorator) {
+        DecorRemove(vehicle, decoratorName);
+    }
 
-        let customRadio = customRadios.find((radio) => {
-            return radio.name === playerRadioStationName;
+    SendNuiMessage(JSON.stringify({ "type": "stop", vehicle }));
+
+    if (radios[vehicle]) {
+        delete radios[vehicle];
+    }
+}
+
+const DECOR_TYPE_INT = 3;
+if (!DecorIsRegisteredAsType(decoratorName, DECOR_TYPE_INT)) {
+    DecorRegister(decoratorName, DECOR_TYPE_INT);
+}
+
+function updateVehiclesRadio() {
+    if (DoesVehicleExistWithDecorator(decoratorName)) {
+        const playerPed = PlayerPedId();
+        const playerPosition = GetEntityCoords(playerPed);
+        const playerVehicle = GetVehiclePedIsIn(playerPed, false);
+        const vehicles = GetGamePool('CVehicle');
+        const currentTime = Date.now();
+
+        for (const vehicle of vehicles) {
+            if (DecorExistOn(vehicle, decoratorName)) {
+                const vehiclePosition = GetEntityCoords(vehicle);
+
+                if (GetDistanceBetweenPositions(...playerPosition, ...vehiclePosition) < 100) {
+                    const isPlayerInsideVehicle = playerVehicle === vehicle;
+                    const offsetCoords = GetOffsetFromEntityGivenWorldCoords(
+                        playerPed,
+                        ...vehiclePosition
+                    );
+
+                    radios[vehicle] = {
+                        radioIndex: DecorGetInt(vehicle, decoratorName),
+                        isInside: isPlayerInsideVehicle,
+                        position: offsetCoords,
+                        updatedAt: currentTime
+                    };
+                }
+            } else if (radios[vehicle]) {
+                StopVehicleRadio(vehicle, false);
+            }
+        }
+
+        for (const vehicle in radios) {
+            const vehicleRadio = radios[vehicle];
+
+            if (currentTime - vehicleRadio.updatedAt > 30000) {
+                StopVehicleRadio(vehicle, false);
+            }
+        }
+
+        SendNuiMessage(JSON.stringify({ "type": "vehicles", "data": radios }));
+    } else {
+        Object.keys(radios).forEach(function(vehicle) {
+            SendNuiMessage(JSON.stringify({ "type": "stop", "vehicle": vehicle }));
+
+            delete radios[vehicle];
+        });
+    }
+}
+
+function GetDistanceBetweenPositions(x1, y1, z1, x2, y2, z2) {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const dz = z2 - z1;
+
+    return Math.sqrt(dx * dx + dy * dy + dz * dz);
+}
+
+
+setInterval(() => {
+    const playerPed = PlayerPedId();
+
+    if (IsPlayerVehicleRadioEnabled()) {
+        const vehicle = GetVehiclePedIsIn(playerPed, false);
+        const stationName = GetPlayerRadioStationName();
+
+        let radioIndex = customRadios.findIndex((radio) => {
+            return radio.name === stationName;
         });
 
-        if (!isPlaying && customRadio) {
-            PlayCustomRadio(customRadio);
-        } else if (isPlaying && customRadio && customRadios.indexOf(customRadio) !== index) {
+        if (radioIndex !== -1 && (!DecorExistOn(vehicle, decoratorName) || radioIndex !== DecorGetInt(vehicle, decoratorName))) {
+            DecorSetInt(vehicle, decoratorName, radioIndex);
+        }
+
+        if (!isPlaying && radioIndex !== -1) {
+            PlayCustomRadio();
+        } else if (isPlaying && radioIndex === -1) {
             StopCustomRadios();
-            PlayCustomRadio(customRadio);
-        } else if (isPlaying && !customRadio) {
+            StopVehicleRadio(vehicle);
+        }
+    } else {
+        if (isPlaying) {
             StopCustomRadios();
         }
-    } else if (isPlaying) {
-        StopCustomRadios();
+
+        const lastVehicle = GetVehiclePedIsIn(playerPed, true);
+
+        if (!GetIsVehicleEngineRunning(lastVehicle) && DecorExistOn(lastVehicle, decoratorName)) {
+            StopVehicleRadio(lastVehicle);
+        }
     }
 
     volume = GetProfileSetting(306) / 10;
@@ -87,4 +171,8 @@ setTick(() => {
         SendNuiMessage(JSON.stringify({ "type": "volume", "volume": volume }));
         previousVolume = volume;
     }
-});
+}, 100);
+
+setInterval(() => {
+    updateVehiclesRadio();
+}, 250);
