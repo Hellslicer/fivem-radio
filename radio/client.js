@@ -89,15 +89,23 @@ function updateVehiclesRadio() {
                 const vehiclePosition = GetEntityCoords(vehicle);
 
                 if (GetDistanceBetweenPositions(...playerPosition, ...vehiclePosition) < 100) {
+                    let isLoud = !AreAllVehicleWindowsIntact(vehicle);
                     const isPlayerInsideVehicle = playerVehicle === vehicle;
                     const offsetCoords = GetOffsetFromEntityGivenWorldCoords(
                         playerPed,
                         ...vehiclePosition
                     );
 
+                    for (let doorIndex = 0; doorIndex <= 5 && !isLoud; doorIndex++) {
+                        if (GetVehicleDoorAngleRatio(vehicle, doorIndex) > 0) {
+                            isLoud = true;
+                        }
+                    }
+
                     radios[vehicle] = {
                         radioIndex: DecorGetInt(vehicle, decoratorName),
                         isInside: isPlayerInsideVehicle,
+                        isLoud,
                         position: offsetCoords,
                         updatedAt: currentTime
                     };

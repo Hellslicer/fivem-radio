@@ -14,11 +14,13 @@
          * Includes all methods for playing, stopping, etc.
          * @param {number} index - Current station index.
          * @param {boolean} isInside - If the player is inside.
+         * @param {boolean} isLoud - If the station is loud.
          * @param {Array} position - Array of position [x, y z].
          */
-        const Radio = function (index = 0, isInside = true, position = [0, 0, 0]) {
+        const Radio = function (index = 0, isInside = true, isLoud = false, position = [0, 0, 0]) {
             this.index = index;
             this.isInside = isInside;
+            this.isLoud = isLoud;
             this.position = position;
 
             this.panner = audioContext.createPanner();
@@ -48,11 +50,8 @@
                 // Set media source.
                 self.sound.src = station.data.url;
 
-                // Set volume.
-                self.setVolume();
-
-                // Set inital position.
-                self.setPosition(self.isInside, self.position);
+                // Set inital position and volume.
+                self.setPosition(self.isInside, self.isLoud, self.position);
 
                 // Begin playing the sound.
                 try {
@@ -76,7 +75,7 @@
              */
             setVolume: function() {
                 if (this.sound) {
-                    this.sound.volume  = ((stations[this.index].data.volume || 1.0) * volume) / (this.isInside ? 1 : 2);
+                    this.sound.volume  = ((stations[this.index].data.volume || 1.0) * volume) / (this.isInside || this.isLoud ? 1 : 2);
                 }
             },
 
@@ -93,10 +92,12 @@
             /**
              * Change stations position.
              * @param {boolean} isInside - If the player is inside.
+             * @param {boolean} isLoud - If the station is loud.
              * @param {Array} position - Array of position [x, y z].
              */
-            setPosition: function(isInside, position) {
+            setPosition: function(isInside, isLoud, position) {
                 this.isInside = isInside;
+                this.isLoud = isLoud;
                 this.position = position;
 
                 if (this.sound) {
@@ -125,10 +126,10 @@
                             const radio = radios[vehicle];
 
                             if (!vehiclesRadio[vehicle]) {
-                                vehiclesRadio[vehicle] = new Radio(radio.radioIndex, radio.isInside, radio.position);
+                                vehiclesRadio[vehicle] = new Radio(radio.radioIndex, radio.isInside, radio.isLoud, radio.position);
                                 vehiclesRadio[vehicle].play();
                             } else {
-                                vehiclesRadio[vehicle].setPosition(radio.isInside, radio.position);
+                                vehiclesRadio[vehicle].setPosition(radio.isInside, radio.isLoud, radio.position);
 
                                 if (vehiclesRadio[vehicle].index !== radio.radioIndex) {
                                     vehiclesRadio[vehicle].setIndex(radio.radioIndex);
